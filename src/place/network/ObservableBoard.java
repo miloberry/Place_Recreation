@@ -5,7 +5,7 @@ import place.PlaceBoard;
 
 public class ObservableBoard extends Observable {
     private PlaceBoard board;
-    public ObservableBoard() {
-
+    public ObservableBoard(int dim) {
+        board = new PlaceBoard(dim);
     }
 }
