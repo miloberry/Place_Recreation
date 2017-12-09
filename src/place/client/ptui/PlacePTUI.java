@@ -1,15 +1,13 @@
 package place.client.ptui;
 import place.network.PlaceClient;
 import java.io.IOException;
-import java.util.Observable;
-import java.util.Observer;
 import java.util.Scanner;
 
 public class PlacePTUI {
     private static String username;
     private static boolean running = false;
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException{
         if (args.length != 3) {
             System.out.println("Usage: java PlacePTUI host #_port username");
             System.exit(1);

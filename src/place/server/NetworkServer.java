@@ -58,14 +58,14 @@ public class NetworkServer extends Thread implements Observer{
             PlaceRequest<PlaceBoard> boardReq = new PlaceRequest<>(PlaceRequest.RequestType.BOARD, board);
             out.writeUnshared(boardReq);
             out.flush();
-            this.tileChanging(board, in, out);
+            this.tileChanging(board, in);
         }
         catch (IOException e) {
             System.exit(1);
         }
     }
 
-    public void tileChanging(PlaceBoard board, ObjectInputStream in, ObjectOutputStream out) {
+    public void tileChanging(PlaceBoard board, ObjectInputStream in) {
         try {
             while (running) {
                 PlaceRequest<?> req = (PlaceRequest<?>)in.readUnshared();
@@ -74,8 +74,10 @@ public class NetworkServer extends Thread implements Observer{
                     if (board.isValid(temp)) {
                         board.setTile(temp);
                         PlaceRequest<PlaceTile> tileChanged = new PlaceRequest<>(PlaceRequest.RequestType.TILE_CHANGED, temp);
-                        out.writeUnshared(tileChanged);
-                        out.flush();
+                        for (ObjectOutputStream output: clientOut.values()) {
+                            output.writeUnshared(tileChanged);
+                            output.flush();
+                        }
                     }
                 }
             }

@@ -10,7 +10,7 @@ import java.net.Socket;
 import java.util.Observable;
 import java.util.Observer;
 
-public class PlaceClient extends Thread implements Observer{
+public class PlaceClient extends Thread {
     private Socket socket;
     private ObjectInputStream in;
     private ObjectOutputStream out;
@@ -38,7 +38,7 @@ public class PlaceClient extends Thread implements Observer{
         out.flush();
     }
 
-    public synchronized void changeTile(int row, int col, int color) throws IOException {
+    public synchronized void changeTile(int row, int col, int color) throws IOException, InterruptedException {
         PlaceColor placeColor = null;
         for (PlaceColor test: PlaceColor.values()) {
             if (test.getNumber() == color) {
@@ -50,6 +50,7 @@ public class PlaceClient extends Thread implements Observer{
             PlaceRequest<PlaceTile> changeReq = new PlaceRequest<>(PlaceRequest.RequestType.CHANGE_TILE, toChange);
             out.writeUnshared(changeReq);
             out.flush();
+            currentThread().sleep(500);
         }
         else {
             System.out.println("Color not valid - Please Enter Number between 0 - 15");
@@ -83,10 +84,5 @@ public class PlaceClient extends Thread implements Observer{
             System.err.println("yikes");
             System.exit(1);
         }
-    }
-
-    @Override
-    public void update(Observable o, Object arg) {
-        System.out.println(board);
     }
 }

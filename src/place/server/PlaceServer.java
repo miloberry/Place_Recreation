@@ -2,7 +2,6 @@ package place.server;
 
 import place.PlaceBoard;
 import place.PlaceException;
-import place.network.PlaceRequest;
 
 import java.io.IOException;
 import java.io.PrintWriter;
