@@ -40,11 +40,12 @@ public class PlaceServer {
         networkServer = new NetworkServer();
         while (running) {
             try {
+                System.out.println("looking for client");
                 Socket temp = server.accept();
                 System.out.println("found client: " + temp);
                 networkServer.addClient(temp, board);
             }
-            catch (IOException | ClassNotFoundException e) {
+            catch (IOException e) {
                 System.err.println("Something has gone horribly wrong!");
                 e.printStackTrace();
             }
