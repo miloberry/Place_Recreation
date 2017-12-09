@@ -1,21 +1,19 @@
 package place.server;
 
+import place.PlaceBoard;
 import place.PlaceException;
-import place.network.ObservableBoard;
 import place.network.PlaceRequest;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashSet;
 import java.util.Scanner;
 
 public class PlaceServer {
     private ServerSocket server;
-    private HashSet<PlaceClient> clients = new HashSet<>();
     private int portNum;
-    private ObservableBoard board;
+    private PlaceBoard board;
     private NetworkServer networkServer;
 
     public PlaceServer(int port) throws PlaceException {
@@ -35,50 +33,18 @@ public class PlaceServer {
         }
     }
 
-    public void addClient(String username) {
-        try {
-            PlaceClient temp = new PlaceClient("localhost", portNum, board);
-            boolean connect = networkServer.addClient(temp, username);
-            if (connect) {
-                System.out.println("connected");
-                clients.add(temp);
-                networkServer.run(connect, username, board);
-                temp.start();
-                temp.join();
-            }
-        }
-        catch (IOException e) {
-            System.err.println("Something has gone horribly wrong!");
-            e.printStackTrace();
-            System.exit(1);
-        }
 
-        catch (InterruptedException e) {
-            System.err.println("fuck");
-            System.exit(1);
-        }
-    }
 
     public void run(boolean running, int dim) {
-        board = new ObservableBoard(dim);
+        board = new PlaceBoard(dim);
         networkServer = new NetworkServer();
-        boolean worked = false;
         while (running) {
             try {
                 Socket temp = server.accept();
                 System.out.println("found client: " + temp);
-                Scanner scanner = new Scanner(temp.getInputStream());
-                if (scanner.hasNextLine()) {
-                    String line = scanner.nextLine();
-                    String[] lines = line.split(" ");
-                    if (lines.length == 2 && lines[0].equals(PlaceRequest.RequestType.LOGIN.toString())) {
-                        System.out.println("LOGIN");
-                        System.out.println(lines[1]);
-                        addClient(lines[1]);
-                    }
-                }
+                networkServer.addClient(temp, board);
             }
-            catch (IOException e) {
+            catch (IOException | ClassNotFoundException e) {
                 System.err.println("Something has gone horribly wrong!");
                 e.printStackTrace();
             }
