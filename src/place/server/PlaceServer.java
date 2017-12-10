@@ -1,5 +1,6 @@
 package place.server;
 
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import place.PlaceBoard;
 import place.PlaceException;
 import place.network.ObservableBoard;
@@ -10,21 +11,38 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Scanner;
 
+/**
+ * the main server - just waits for clients and then sends then to NetworkServer
+ * @author Taylor Berry
+ * @author Parker Johnson
+ */
 public class PlaceServer {
     private ServerSocket server;
     private int portNum;
     private ObservableBoard board;
     private NetworkServer networkServer;
 
-    public PlaceServer(int port) throws PlaceException {
+    /**
+     * sets up server on port
+     * @param port: port to start server on
+     * @throws PlaceException
+     */
+    public PlaceServer(int port) {
         try {
             this.server = new ServerSocket(port);
             portNum = port;
-        } catch (IOException e) {
-            throw new PlaceException(e);
+        }
+        catch (IOException e) {
+            System.out.println("Error starting server on " + portNum);
         }
     }
 
+    /**
+     * sits and waits for client to connect then sends them to NetworkServer
+     * also makes board that is sent to NS
+     * @param running: if program is running
+     * @param dim: dimensions of the board
+     */
     public void run(boolean running, int dim) {
         board = new ObservableBoard(dim);
         networkServer = new NetworkServer();
@@ -32,7 +50,6 @@ public class PlaceServer {
             try {
                 System.out.println("looking for client");
                 Socket temp = server.accept();
-                System.out.println("found client: " + temp);
                 networkServer.addClient(temp, board);
             }
             catch (IOException e) {
@@ -42,20 +59,19 @@ public class PlaceServer {
         }
     }
 
+    /**
+     * main method - starts server if there are the correct number of args
+     * @param args the program arguments - #_port #_dim
+     * @throws PlaceException
+     */
     public static void main(String[] args) throws PlaceException {
         if (!(args.length == 2)) {
-            System.out.println("Usage: java PlaceServer port #_dim");
+            System.out.println("Usage: java PlaceServer #_port #_dim");
             System.exit(1);
         }
         else {
-            try {
-                PlaceServer server = new PlaceServer(Integer.parseInt(args[0]));
-                server.run(true, Integer.parseInt(args[1]));
-            }
-            catch (PlaceException e) {
-                System.err.println("Failed to start server!");
-                e.printStackTrace();
-            }
+            PlaceServer server = new PlaceServer(Integer.parseInt(args[0]));
+            server.run(true, Integer.parseInt(args[1]));
         }
     }
 }

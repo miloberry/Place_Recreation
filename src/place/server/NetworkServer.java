@@ -1,18 +1,16 @@
 package place.server;
-
-import place.PlaceBoard;
 import place.PlaceTile;
 import place.network.ObservableBoard;
 import place.network.PlaceRequest;
-
 import java.io.*;
 import java.net.Socket;
-import java.time.Instant;
-import java.time.ZoneId;
 import java.util.HashMap;
-import java.util.Observable;
-import java.util.Observer;
 
+/**
+ * handles all client communication and keeps a list of all open sockets to communicate with
+ * @author Taylor Berry
+ * @author Parker Johnson
+ */
 public class NetworkServer extends Thread {
     private HashMap<String, ObjectOutputStream> clientOut = new HashMap<>();
     private HashMap<String, ObjectInputStream> clientIn = new HashMap<>();
@@ -20,12 +18,17 @@ public class NetworkServer extends Thread {
     private static boolean running = false;
     private ObservableBoard board;
     private String workingUser;
-    private long startTime = System.currentTimeMillis();
 
-
+    /**
+     * adds a client to list of running clients and creates input and output
+     * if their username is not already in use, else send error and starts a thread
+     * @param socket socket to connect
+     * @param board board to share with client
+     */
     public void addClient(Socket socket, ObservableBoard board) {
         running = true;
         try {
+
             ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
             PlaceRequest<?> req = (PlaceRequest<?>)in.readUnshared();
             this.board = board;
@@ -43,6 +46,7 @@ public class NetworkServer extends Thread {
                     openSockets.put(workingUser, socket);
                     Thread netThread = new Thread(() -> this.run());
                     netThread.start();
+                    System.out.println(workingUser + " has logged in at " + socket);
                 }
             }
         }
@@ -52,6 +56,9 @@ public class NetworkServer extends Thread {
         }
     }
 
+    /**
+     * tells client it has been successfully connected then sends board and then changes to waiting for tile changes
+     */
     public void run() {
         try {
             String username = workingUser;
@@ -71,6 +78,13 @@ public class NetworkServer extends Thread {
         }
     }
 
+    /**
+     * while running the Network client waits for requests to change the tile and if they are valid tiles then it
+     * will change the tile and tell the clients that the tile has changed
+     * @param board: board that is being updated
+     * @param in: the input it is listening on
+     * @param username: the client that is asking to change tiles
+     */
     public void tileChanging(ObservableBoard board, ObjectInputStream in, String username) {
         try {
             while (running) {
@@ -97,7 +111,15 @@ public class NetworkServer extends Thread {
             }
         }
         catch (IOException | ClassNotFoundException e) {
-            System.exit(1);
+            try {
+                openSockets.get(username).close();
+                openSockets.remove(username);
+                clientOut.remove(username);
+                clientIn.remove(username);
+                System.out.println(username + " has disconnected");
+            }catch (IOException f){
+                System.out.println("Something not good has happened");
+            }
         }
     }
 }

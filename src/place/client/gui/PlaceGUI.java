@@ -11,8 +11,8 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import place.PlaceColor;
-import place.PlaceException;
 import place.network.ObservableBoard;
 import place.network.PlaceClient;
 import java.io.IOException;
@@ -21,6 +21,11 @@ import java.util.Observer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+/**
+ * The client with a GUI
+ * @author Taylor Berry
+ * @author Parker Johnson
+ */
 public class PlaceGUI extends Application implements Observer{
     private static String username;
     private static boolean running = false;
@@ -33,6 +38,12 @@ public class PlaceGUI extends Application implements Observer{
     private PlaceClient serverConn;
     private boolean sleeping;
 
+    /**
+     * Confirms that the input is in the right format and passes the data to the application launcher
+     * @param args Usage: java PlacePTUI host #_port username
+     * @throws IOException if the streams get corrupted
+     * @throws InterruptedException if the thread gets interrupted
+     */
     public static void main(String[] args) throws IOException, InterruptedException{
         if (args.length != 3) {
             System.out.println("Usage: java PlacePTUI host #_port username");
@@ -44,13 +55,23 @@ public class PlaceGUI extends Application implements Observer{
         Application.launch(args);
     }
 
-    public void init() throws PlaceException,  IOException {
+    /**
+     * Initializes communication with server and sets itself as an observer of board
+     * @throws IOException if stream closes/is corrupted
+     */
+    public void init() throws IOException {
         serverConn = new PlaceClient(host, port, board);
         serverConn.connectToServer(username);
         running = true;
         board.addObserver(this);
     }
 
+    /**
+     * creates all the gui stuff - a gridpane of rectangles representing the board with the tooltips showing
+     * the user, time changed, location, and current color and a togglegrid of colors to choose to change a tile
+     * @param mainStage: the main stage of the gui
+     * @throws InterruptedException if the thread is interrupted
+     */
     public void start(Stage mainStage) throws InterruptedException {
         int count = 0;
         ToggleGroup colors = new ToggleGroup();
@@ -139,14 +160,25 @@ public class PlaceGUI extends Application implements Observer{
         main.setBottom(hbox);
         main.setCenter(grid);
         Scene sc = new Scene(main);
+        mainStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent event) {
+                System.exit(2);
+            }
+        });
         mainStage.setScene(sc);
         mainStage.show();
     }
 
+    /**
+     * if the board is updated the gui goes back through and changes the tiles as well as changing the tooltips
+     * then stops the user from being able to change for 500 milliseconds
+     * @param o not used
+     * @param arg not used
+     */
     @Override
     public void update(Observable o, Object arg) {
         try {
-            System.out.println("update");
             for (int r = 0; r < board.getDim(); r++) {
                 for (int c = 0; c < board.getDim(); c++) {
                     int row = r;
@@ -195,7 +227,7 @@ public class PlaceGUI extends Application implements Observer{
             sleeping = false;
         }
         catch (InterruptedException e) {
-            System.exit(3);
+            System.out.println("no");
         }
     }
 }

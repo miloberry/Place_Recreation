@@ -10,6 +10,11 @@ import java.net.Socket;
 import java.util.Observable;
 import java.util.Observer;
 
+/**
+ * Place Client is thing the client uses to communicate with the server
+ * @author : Taylor Berry
+ * @author : Parker Johnson
+ */
 public class PlaceClient extends Thread {
     private Socket socket;
     private ObjectInputStream in;
@@ -18,6 +23,13 @@ public class PlaceClient extends Thread {
     private ObservableBoard userboard;
     private String username;
 
+    /**
+     * Constructor
+     * @param hostname the name of the host server
+     * @param port the port of the host server
+     * @param userboard the board to be used by the GUI/PTUI
+     * @throws IOException when the connection to the server fails
+     */
     public PlaceClient(String hostname, int port, ObservableBoard userboard) throws IOException {
         try {
             this.userboard = userboard;
@@ -33,6 +45,11 @@ public class PlaceClient extends Thread {
         }
     }
 
+    /**
+     * Sends the initial message to the server, asking to be logged in
+     * @param username the username of the client
+     * @throws IOException if the stream gets corrupted
+     */
     public void connectToServer(String username) throws IOException {
         this.username = username;
         PlaceRequest<String> loginReq = new PlaceRequest<>(PlaceRequest.RequestType.LOGIN, username);
@@ -40,6 +57,14 @@ public class PlaceClient extends Thread {
         out.flush();
     }
 
+    /**
+     * Sends the message to change a tile on the board to the server
+     * @param row the row of the tile
+     * @param col the column of the tile
+     * @param color the color of the tile
+     * @throws IOException if the stream gets corrupted
+     * @throws InterruptedException if the thread gets interrupted
+     */
     public synchronized void changeTile(int row, int col, int color) throws IOException, InterruptedException {
         PlaceColor placeColor = null;
         for (PlaceColor test: PlaceColor.values()) {
@@ -58,6 +83,9 @@ public class PlaceClient extends Thread {
         }
     }
 
+    /**
+     * The main loop of the thread. waits for communication from the server and then acts on those communications
+     */
     @Override
     public void run() {
         try {
@@ -84,7 +112,7 @@ public class PlaceClient extends Thread {
                 }
                 if (req.getType() == PlaceRequest.RequestType.TILE_CHANGED) {
                     userboard.setTile((PlaceTile) req.getData());
-                    System.out.println(userboard);
+                    //System.out.println(userboard);
                 }
             }
         } catch (IOException | InterruptedException | ClassNotFoundException e){
