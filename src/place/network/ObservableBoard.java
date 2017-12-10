@@ -5,7 +5,6 @@ import place.PlaceTile;
 
 import java.io.Serializable;
 import java.util.Observable;
-import java.util.Observer;
 
 public class ObservableBoard extends Observable implements Serializable {
     private PlaceBoard board;
