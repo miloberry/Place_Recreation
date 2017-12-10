@@ -1,15 +1,9 @@
 package place.server;
-
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
-import place.PlaceBoard;
 import place.PlaceException;
 import place.network.ObservableBoard;
-
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Scanner;
 
 /**
  * the main server - just waits for clients and then sends then to NetworkServer
