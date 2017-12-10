@@ -1,4 +1,6 @@
 package place.client.ptui;
+import place.PlaceBoard;
+import place.network.ObservableBoard;
 import place.network.PlaceClient;
 import java.io.IOException;
 import java.util.Scanner;
@@ -6,6 +8,7 @@ import java.util.Scanner;
 public class PlacePTUI {
     private static String username;
     private static boolean running = false;
+    private static ObservableBoard board = new ObservableBoard();
 
     public static void main(String[] args) throws IOException, InterruptedException{
         if (args.length != 3) {
@@ -16,7 +19,7 @@ public class PlacePTUI {
             int port = Integer.parseInt(args[1]);
             String host = args[0];
             username = args[2];
-            PlaceClient serverConn = new PlaceClient(host, port);
+            PlaceClient serverConn = new PlaceClient(host, port, board);
             serverConn.connectToServer(username);
             running = true;
             Scanner scanner = new Scanner(System.in);
@@ -39,3 +42,4 @@ public class PlacePTUI {
         }
     }
 }
+

@@ -14,11 +14,13 @@ public class PlaceClient extends Thread {
     private Socket socket;
     private ObjectInputStream in;
     private ObjectOutputStream out;
-    private PlaceBoard board;
+    private ObservableBoard board;
+    private ObservableBoard userboard;
     private String username;
 
-    public PlaceClient(String hostname, int port) throws IOException {
+    public PlaceClient(String hostname, int port, ObservableBoard userboard) throws IOException {
         try {
+            this.userboard = userboard;
             this.socket = new Socket(hostname, port);
             this.out = new ObjectOutputStream(socket.getOutputStream());
             Thread netThread = new Thread(() -> this.run());
@@ -46,11 +48,10 @@ public class PlaceClient extends Thread {
             }
         }
         if (placeColor != null) {
-            PlaceTile toChange = new PlaceTile(row, col, username, placeColor);
+            PlaceTile toChange = new PlaceTile(row, col, username, placeColor, System.currentTimeMillis());
             PlaceRequest<PlaceTile> changeReq = new PlaceRequest<>(PlaceRequest.RequestType.CHANGE_TILE, toChange);
             out.writeUnshared(changeReq);
             out.flush();
-            currentThread().sleep(500);
         }
         else {
             System.out.println("Color not valid - Please Enter Number between 0 - 15");
@@ -67,7 +68,13 @@ public class PlaceClient extends Thread {
                     System.out.println(req.getData());
                 }
                 if (req.getType() == PlaceRequest.RequestType.BOARD) {
-                    board = (PlaceBoard) req.getData();
+                    board = (ObservableBoard) req.getData();
+                    userboard.allocate(board.getDim());
+                    for (int r = 0; r < board.getDim(); r++) {
+                        for (int c = 0; c < board.getDim(); c++) {
+                            userboard.setUpTile(board.getTile(r, c));
+                        }
+                    }
                     System.out.println(board);
                     currentThread().sleep(1000);
                 }
@@ -76,13 +83,21 @@ public class PlaceClient extends Thread {
                     System.exit(1);
                 }
                 if (req.getType() == PlaceRequest.RequestType.TILE_CHANGED) {
-                    board.setTile((PlaceTile) req.getData());
-                    System.out.println(board);
+                    userboard.setTile((PlaceTile) req.getData());
+                    System.out.println(userboard);
                 }
             }
-        } catch (IOException | ClassNotFoundException | InterruptedException e) {
-            System.err.println("yikes");
-            System.exit(1);
+        } catch (IOException | InterruptedException | ClassNotFoundException e){
+            try {
+                PlaceRequest<String> error = new PlaceRequest<>(PlaceRequest.RequestType.ERROR, "system issue");
+                out.writeUnshared(error);
+                out.flush();
+                socket.close();
+                System.exit(2);
+            }
+            catch (Exception k) {
+                System.exit(2);
+            }
         }
     }
 }

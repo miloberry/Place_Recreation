@@ -2,6 +2,7 @@ package place.server;
 
 import place.PlaceBoard;
 import place.PlaceException;
+import place.network.ObservableBoard;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -12,7 +13,7 @@ import java.util.Scanner;
 public class PlaceServer {
     private ServerSocket server;
     private int portNum;
-    private PlaceBoard board;
+    private ObservableBoard board;
     private NetworkServer networkServer;
 
     public PlaceServer(int port) throws PlaceException {
@@ -24,18 +25,8 @@ public class PlaceServer {
         }
     }
 
-    public void close() {
-        try {
-            this.server.close();
-        } catch (IOException ioe) {
-            // squash
-        }
-    }
-
-
-
     public void run(boolean running, int dim) {
-        board = new PlaceBoard(dim);
+        board = new ObservableBoard(dim);
         networkServer = new NetworkServer();
         while (running) {
             try {

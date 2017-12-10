@@ -2,23 +2,28 @@ package place.server;
 
 import place.PlaceBoard;
 import place.PlaceTile;
+import place.network.ObservableBoard;
 import place.network.PlaceRequest;
 
 import java.io.*;
 import java.net.Socket;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Observable;
 import java.util.Observer;
 
-public class NetworkServer extends Thread implements Observer{
+public class NetworkServer extends Thread {
     private HashMap<String, ObjectOutputStream> clientOut = new HashMap<>();
     private HashMap<String, ObjectInputStream> clientIn = new HashMap<>();
+    private HashMap<String, Socket> openSockets = new HashMap<>();
     private static boolean running = false;
-    private PlaceBoard board;
+    private ObservableBoard board;
     private String workingUser;
+    private long startTime = System.currentTimeMillis();
 
 
-    public void addClient(Socket socket, PlaceBoard board) {
+    public void addClient(Socket socket, ObservableBoard board) {
         running = true;
         try {
             ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
@@ -35,6 +40,7 @@ public class NetworkServer extends Thread implements Observer{
                 } else {
                     clientIn.put(workingUser, in);
                     clientOut.put(workingUser, out);
+                    openSockets.put(workingUser, socket);
                     Thread netThread = new Thread(() -> this.run());
                     netThread.start();
                 }
@@ -55,22 +61,23 @@ public class NetworkServer extends Thread implements Observer{
                     "logged in as " + username);
             out.writeUnshared(loginSuccessReq);
             out.flush();
-            PlaceRequest<PlaceBoard> boardReq = new PlaceRequest<>(PlaceRequest.RequestType.BOARD, board);
+            PlaceRequest<ObservableBoard> boardReq = new PlaceRequest<>(PlaceRequest.RequestType.BOARD, board);
             out.writeUnshared(boardReq);
             out.flush();
-            this.tileChanging(board, in);
+            this.tileChanging(board, in, username);
         }
         catch (IOException e) {
             System.exit(1);
         }
     }
 
-    public void tileChanging(PlaceBoard board, ObjectInputStream in) {
+    public void tileChanging(ObservableBoard board, ObjectInputStream in, String username) {
         try {
             while (running) {
                 PlaceRequest<?> req = (PlaceRequest<?>)in.readUnshared();
                 if (req.getType() == PlaceRequest.RequestType.CHANGE_TILE) {
                     PlaceTile temp = (PlaceTile) req.getData();
+                    temp.setTime(System.currentTimeMillis());
                     if (board.isValid(temp)) {
                         board.setTile(temp);
                         PlaceRequest<PlaceTile> tileChanged = new PlaceRequest<>(PlaceRequest.RequestType.TILE_CHANGED, temp);
@@ -80,15 +87,17 @@ public class NetworkServer extends Thread implements Observer{
                         }
                     }
                 }
+                if (req.getType() == PlaceRequest.RequestType.ERROR) {
+                    openSockets.get(username).close();
+                    openSockets.remove(username);
+                    clientIn.remove(username);
+                    clientOut.remove(username);
+
+                }
             }
         }
         catch (IOException | ClassNotFoundException e) {
             System.exit(1);
         }
-    }
-
-    @Override
-    public void update(Observable o, Object arg) {
-
     }
 }
