@@ -15,11 +15,12 @@ import javafx.stage.WindowEvent;
 import place.PlaceColor;
 import place.network.ObservableBoard;
 import place.network.PlaceClient;
+
 import java.io.IOException;
-import java.util.Observable;
-import java.util.Observer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Observable;
+import java.util.Observer;
 
 /**
  * The client with a GUI
